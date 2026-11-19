@@ -3,7 +3,7 @@ title: "Multiple model selection bias in backtesting"
 author:
   - "Pranav Padmanabhan"
 date: 2026-11-18
-categories: [statistics, time-series]
+categories: [statistics, time series]
 ---
 
 Suppose we have some time-series data we want to model. Naively, we might backtest a bunch of candidate models against historical data, score them, and select the one that performs the best. Often, we further hope that the best score surpasses some threshold: for example, a hedge fund will want a trading strategy with a positive expected excess return.
