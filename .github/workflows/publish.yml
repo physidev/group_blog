@@ -1,0 +1,61 @@
+name: Render and deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # Code cells are NOT re-executed in CI: freeze: auto reuses the committed
+      # _freeze/ outputs. Python is still needed for the shinylive filter and as
+      # a fallback if someone forgets to commit _freeze/.
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Ensure shinylive extension is present
+        run: |
+          if [ ! -d _extensions/quarto-ext/shinylive ]; then
+            quarto add quarto-ext/shinylive --no-prompt
+          fi
+
+      - name: Render site
+        run: quarto render
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

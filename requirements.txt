@@ -1,0 +1,8 @@
+# Python needed to render the blog.
+# With freeze: auto, CI only needs shinylive (for the shinylive filter);
+# jupyter/plotly/numpy are needed locally when you (re)render a post with code.
+jupyter
+nbformat
+plotly
+numpy
+shinylive

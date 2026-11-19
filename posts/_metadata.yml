@@ -1,0 +1,20 @@
+# Applied to every post under posts/.
+title-block-banner: true
+toc: true
+
+# Comments on posts only (not on index/authors/about).
+# Get repo-id and category-id from https://giscus.app after enabling Discussions
+# and installing the giscus app on the repository.
+comments:
+  giscus:
+    repo: physidev/group_blog
+    repo-id: "REPLACE_WITH_REPO_ID"
+    category: "Comments"
+    category-id: "REPLACE_WITH_CATEGORY_ID"
+    mapping: pathname
+    reactions-enabled: true
+    loading: lazy
+    input-position: top
+    theme:
+      light: light
+      dark: dark

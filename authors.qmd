@@ -1,0 +1,12 @@
+---
+title: "Authors"
+listing:
+  contents: authors/*.qmd
+  type: grid
+  sort: "title"
+  fields: [title, subtitle, description]
+  grid-columns: 3
+page-layout: full
+---
+
+[Intro line for the authors page.]

@@ -1,0 +1,16 @@
+---
+title: "[Blog title]"
+subtitle: "[Blog tagline]"
+listing:
+  contents: posts
+  sort: "date desc"
+  type: default
+  # No "image": these posts have no thumbnails, and the empty slot squeezed the layout.
+  fields: [date, title, subtitle, author, categories, description]
+  categories: true
+  sort-ui: false
+  filter-ui: true
+  feed: true
+page-layout: full
+title-block-banner: true
+---

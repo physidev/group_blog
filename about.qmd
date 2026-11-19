@@ -1,0 +1,5 @@
+---
+title: "About"
+---
+
+[About the blog: who you are, what you write about, where the name comes from.]

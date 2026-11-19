@@ -1,0 +1,149 @@
+<script>
+// Keep the dark-mode button's tooltip and screen-reader label in sync with the mode.
+(() => {
+  const sync = (el) => {
+    const label = el.classList.contains("alternate") ? "Switch to light mode" : "Switch to dark mode";
+    el.title = label;
+    el.setAttribute("aria-label", label);
+  };
+  document.querySelectorAll(".quarto-color-scheme-toggle").forEach((el) => {
+    sync(el);
+    new MutationObserver(() => sync(el)).observe(el, {attributes: true, attributeFilter: ["class"]});
+  });
+})();
+</script>
+<script>
+// Post-list filter: show it in the right margin above "Categories" when that margin
+// is visible (wide screens); otherwise keep it above the post list.
+(() => {
+  const filter = document.querySelector(".quarto-listing-filter");
+  const margin = document.getElementById("quarto-margin-sidebar");
+  const categories = margin && margin.querySelector(".quarto-listing-category-title");
+  if (!filter || !categories) return;
+  const home = filter.parentElement;
+
+  // Distance from the top of an element's line box to the top of its capital letters.
+  const capTopOffset = (el) => {
+    const cs = getComputedStyle(el);
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const m = ctx.measureText("H");
+    const halfLeading = (parseFloat(cs.lineHeight) - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2;
+    return halfLeading + m.fontBoundingBoxAscent - m.actualBoundingBoxAscent;
+  };
+  const alignWithFirstTitle = () => {
+    const title = document.querySelector(".quarto-post .listing-title a");
+    filter.style.marginTop = "";
+    if (!title || !filter.classList.contains("in-margin")) return;
+    const capTop = title.getBoundingClientRect().top + capTopOffset(title);
+    const gap = capTop - filter.getBoundingClientRect().top;
+    filter.style.marginTop = `${Math.max(0, gap)}px`;
+  };
+
+  const place = () => {
+    const wide = getComputedStyle(margin).display !== "none";
+    if (wide && filter.parentElement !== margin) {
+      margin.insertBefore(filter, categories);
+      filter.classList.add("in-margin");
+    } else if (!wide && filter.parentElement !== home) {
+      home.appendChild(filter);
+      filter.classList.remove("in-margin");
+    }
+    home.closest(".quarto-listing-header, .listing-actions-group").style.display = wide ? "none" : "";
+    alignWithFirstTitle();
+  };
+  // Wait until Quarto has wired the filter to the list (on DOMContentLoaded): it only
+  // looks for the input inside the list, and moving the element afterwards keeps that.
+  const start = () => {
+    place();
+    window.addEventListener("resize", place);
+    if (document.fonts) document.fonts.ready.then(place);  // re-measure once web fonts settle
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => setTimeout(start, 0));
+  } else {
+    setTimeout(start, 0);
+  }
+})();
+</script>
+<script>
+// Navbar alignment: Quarto keeps the navbar full-width while page content sits in a
+// centered column. Pad the navbar so its first item (title, or the menu button on
+// narrow screens) starts where the page column starts, and search ends where it ends.
+// Measured on the standard grid, so the navbar sits in the same place on every page.
+(() => {
+  const container = document.querySelector("#quarto-header .navbar-container");
+  const host = document.getElementById("quarto-content");
+  if (!container || !host) return;
+  const visible = (el) => el && el.getClientRects().length > 0;
+
+  const pageColumn = () => {
+    const body = document.body;
+    const full = body.classList.contains("fullcontent");
+    if (full) body.classList.remove("fullcontent");  // measure the standard layout
+    const probe = document.createElement("div");
+    probe.className = "column-page";
+    probe.style.height = "0";
+    host.appendChild(probe);
+    const r = probe.getBoundingClientRect();
+    probe.remove();
+    if (full) body.classList.add("fullcontent");
+    return r;
+  };
+
+  const align = () => {
+    container.style.paddingLeft = container.style.paddingRight = "0px";
+    const first = [container.querySelector(".navbar-toggler"), container.querySelector(".navbar-brand")]
+      .find(visible);
+    const last = container.querySelector("#quarto-search") ||
+      [...container.querySelectorAll(".quarto-navigation-tool")].filter(visible).pop();
+    if (!first || !last) { container.style.paddingLeft = container.style.paddingRight = ""; return; }
+    const page = pageColumn();
+    // Content in the right margin column (filter, TOC) stops short of the column edge
+    // by the column's inner padding; end search there too.
+    const margin = document.getElementById("quarto-margin-sidebar");
+    const marginShown = margin ? getComputedStyle(margin).display !== "none" : matchMedia("(min-width: 768px)").matches;
+    const inset = !marginShown ? 0 : margin ? parseFloat(getComputedStyle(margin).paddingRight) || 0 : 4;
+    container.style.paddingLeft = `${Math.max(0, page.left - first.getBoundingClientRect().left)}px`;
+    container.style.paddingRight = `${Math.max(0, last.getBoundingClientRect().right - (page.right - inset))}px`;
+  };
+
+  align();
+  window.addEventListener("resize", align);
+  if (document.fonts) document.fonts.ready.then(align);
+})();
+</script>
+<script>
+// Post pages: line up the top of "On this page" (TOC title, right column) with the
+// top of the first paragraph's capital letters. They use different fonts, so measure.
+(() => {
+  const toc = document.querySelector("#quarto-margin-sidebar nav#TOC");
+  const title = toc && toc.querySelector("#toc-title, h2");
+  const firstP = document.querySelector("main.content p:not(#title-block-header p)");
+  if (!toc || !title || !firstP) return;
+  const capTop = (el) => {
+    const cs = getComputedStyle(el);
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const m = ctx.measureText("H");
+    const half = (parseFloat(cs.lineHeight) - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2;
+    return el.getBoundingClientRect().top + half + m.fontBoundingBoxAscent - m.actualBoundingBoxAscent;
+  };
+  const align = () => {
+    const column = document.getElementById("quarto-margin-sidebar");
+    toc.style.paddingTop = "";
+    if (getComputedStyle(column).display === "none") return;
+    column.style.position = "static";  // measure in the unstuck position (the column is sticky)
+    const gap = capTop(firstP) - capTop(title);
+    column.style.position = "";
+    toc.style.paddingTop = `${Math.max(0, gap)}px`;
+  };
+  const start = () => {
+    align();
+    window.addEventListener("resize", align);
+    if (document.fonts) document.fonts.ready.then(align);
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+</script>

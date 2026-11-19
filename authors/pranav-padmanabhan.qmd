@@ -1,0 +1,26 @@
+---
+title: "Pranav Padmanabhan"
+description: "I like math and physics"
+about:
+  template: solana
+  links:
+    - icon: github
+      text: GitHub
+      href: https://github.com/physidev
+    - icon: globe
+      text: Website
+      href: https://physidev.github.io/
+listing:
+  contents: "../posts/**/index.qmd"
+  include:
+    # Must match this person's name in each post's author: list exactly.
+    author: "Pranav Padmanabhan"
+  sort: "date desc"
+  type: table
+  fields: [date, title, categories]
+  feed: false
+  sort-ui: false
+  filter-ui: false
+---
+
+## Posts

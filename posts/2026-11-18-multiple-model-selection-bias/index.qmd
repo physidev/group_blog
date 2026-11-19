@@ -1,0 +1,84 @@
+---
+title: "Multiple model selection bias in backtesting"
+author:
+  - "Pranav Padmanabhan"
+date: 2026-11-18
+categories: [statistics, time-series]
+---
+
+Suppose we have some time-series data we want to model. Naively, we might backtest a bunch of candidate models against historical data, score them, and select the one that performs the best. Often, we further hope that the best score surpasses some threshold: for example, a hedge fund will want a trading strategy with a positive expected excess return.
+
+This methodology, unfortunately, invites selection bias --- we are quite likely to pick an overfitted model that by happenstance performed very well on the backtest data but generalizes poorly. Is there a principled way to select the best model while reducing the likelihood that it's just an overfitted model? I [came across](https://x.com/__paleologo/status/2122769573757723055) one proposed solution today, what Giuseppe Paleologo calls the *Rademacher antiserum*.
+
+## The problem
+
+Let's formalize the situation. Suppose we have a family of models indexed by $\lambda \in \Lambda$ and we backtest each of them against historical data sampled at $T$ many dates. This gives us scores $x_{t,\lambda}$, each measuring how successfully model $\lambda$ performed on the $t$-th date. Let's write $\mathbf{x}_{t} = \left( x_{t,\lambda} \right)_{\lambda \in \Lambda}$ for the vector in $\mathbb{R}^{\Lambda}$ of all scores on the $t$-th date and $\mathbf{X} = \left( \mathbf{x}_{t} \right)_{1 \leq t \leq T}$ for the matrix of all scores.
+
+Now, we make a strong assumption: suppose all the rows $\mathbf{x}_{t}$ are I.I.D. This is *not* true for time-series in general, but it will allow us to apply the standard tools of statistical learning theory. A price worth paying! Finally, we can define the things we want to estimate:
+
+$$
+\theta_{\lambda} = \mathbb{E}\left[ x_{t,\lambda} \right], \qquad \widehat{\theta}_{\lambda} = \frac{1}{T}\sum_{t = 1}^{T}x_{t,\lambda}.
+$$
+
+In this language, we seek the model $\lambda$ which maximizes the expected score $\theta_{\lambda}$. Furthermore, assume we want $\theta_{\lambda} > 0$, corresponding to the threshold requirement.
+
+The naïve procedure from before just corresponds to selecting the model $\lambda^{\star}$ which maximizes the *estimate* $\widehat{\theta}_{\lambda^{\star}}$, since the true score $\theta_{\lambda^{\star}}$ is unknown. Indeed, this discrepancy is where our problem lies. Specifically, $\widehat{\theta}_{\lambda^{\star}}$ could be positive while $\theta_{\lambda^{\star}}$ is not --- not great for the hedge fund using model $\lambda^{\star}$!
+
+The correction Paleologo describes is the following: instead of checking whether $\widehat{\theta}_{\lambda^{\star}}$ is positive, check the corrected, conservative estimate:
+
+$$
+L_{\lambda^{\star}} \coloneqq \widehat{\theta}_{\lambda^{\star}} - 2\widehat{R}(\mathbf{X}) - 3\kappa\sqrt{\frac{2\log\left( 2/\delta \right)}{T}},
+$$
+
+where $\widehat{R}(\mathbf{X})$ is the Rademacher complexity of our family of models, $\kappa$ uniformly bounds the magnitude of the scores, and $\delta$ controls the probability that $L_{\lambda}$ is not a lower bound of $\theta_{\lambda}$.
+
+$$
+\mathbb{P}\bigl[ \theta_{\lambda} \geq L_{\lambda}\ \text{for all}\ \lambda \in \Lambda \bigr] \geq 1 - \delta.
+$$ {#eq-bound}
+
+This prescription raises two questions: what is Rademacher complexity, and how does it help solve the problem of selection bias? If you're familiar with statistical learning theory, you might notice this problem is pretty much identical to *empirical risk minimization*, and we can follow its principles to obtain some answers.
+
+## Arriving at Rademacher complexity
+
+Taking a step back, remember the problem with just picking the best model is that if our family of models is sufficiently rich, it could be overfitting to noise in our historical data. That is, even on purely noisy historical data we might always be able to find a model $\lambda$ that ostensibly has a high score. Given this observation, it is probably useful to know how high a score our family of models $\Lambda$ can get based off pure noise!
+
+One crude way to do this is by splitting the set of dates into two halves, $A$ and $B$, and consider the empirical average score in each half:
+
+$$
+\widehat{\theta}_{\lambda}^{A} \coloneqq \frac{2}{T}\sum_{t \in A}x_{t,\lambda}, \qquad \widehat{\theta}_{\lambda}^{B} \coloneqq \frac{2}{T}\sum_{t \in B}x_{t,\lambda}.
+$$
+
+Since we assumed the score vectors $\mathbf{x}_{t}$ are I.I.D., the true average score in both halves must be equal to $\theta_{\lambda}$. The difference $\widehat{\theta}_{\lambda}^{A} - \widehat{\theta}_{\lambda}^{B}$ then comes purely from noise, so the quantity
+
+$$
+\sup_{\lambda \in \Lambda}\left( \widehat{\theta}_{\lambda}^{A} - \widehat{\theta}_{\lambda}^{B} \right)
+$$ {#eq-split}
+
+being large means we can find a model that distinguishes between $A$ and $B$, even when the scores $\mathbf{X}$ contain no information about the split!
+
+Now, we might have just gotten unlucky with our choice of $A$ and $B$ --- what would be damning is if the difference was large regardless of which split we made. To measure this, we can instead randomly assign each date $t$ independently to $A$ or $B$ by flipping a fair coin. Our difference becomes, up to a constant factor,
+
+$$
+\sup_{\lambda \in \Lambda}\ \frac{1}{T}\sum_{t = 1}^{T}\varepsilon_{t}x_{t,\lambda},
+$$
+
+where the $\varepsilon_{1},\ldots,\varepsilon_{T}$ are I.I.D. uniform on $\left\{ \pm 1 \right\}$ and independent of $\mathbf{X}$. As it so happens, the expectation of this quantity with respect to the coin flips $\varepsilon$ is precisely the Rademacher complexity:
+
+$$
+\widehat{R}\left( \mathbf{X} \right) \coloneqq \mathbb{E}_{\varepsilon}\left[ \sup_{\lambda \in \Lambda}\frac{1}{T}\sum_{t = 1}^{T}\varepsilon_{t}x_{t,\lambda} \right].
+$$
+
+If $\widehat{R}(\mathbf{X})$ is large, we know the high score we get for model $\lambda^{\star}$ might just be an artifact of noise due to the richness of our family of models.
+
+So far, this discussion has been a fun diversion, but it's time to return to our original problem: where does that lower bound come from? Recall that the issue is that we want $\theta_{\lambda} > 0$, but we currently settle for checking $\widehat{\theta}_{\lambda} > 0$. Instead, let's write:
+
+$$
+\begin{aligned}
+\theta_{\lambda} &= \widehat{\theta}_{\lambda} - \left( \theta_{\lambda} - \widehat{\theta}_{\lambda} \right) \\
+&\geq \widehat{\theta}_{\lambda} - \sup_{\lambda \in \Lambda}\left( \theta_{\lambda} - \widehat{\theta}_{\lambda} \right).
+\end{aligned}
+$$
+
+A uniform upper bound on the error $\theta_{\lambda} - \widehat{\theta}_{\lambda}$ will thus supply us with the kind of lower bound we want. A glance at Equation ([-@eq-split]) should make it slightly clearer why $\widehat{R}(\mathbf{X})$ helps us here.
+
+The actual proof of ([-@eq-bound]) uses [McDiarmid's inequality](https://en.wikipedia.org/wiki/McDiarmid%27s_inequality) and an interesting technique called [*symmetrization*](https://threesquirrelsdotblog.com/2022/12/14/a-note-on-the-symmetrization-technique/) that I don't fully understand.

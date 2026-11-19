@@ -1,0 +1,46 @@
+project:
+  type: website
+  output-dir: _site
+
+execute:
+  # Re-run code only when a document's source changes; otherwise reuse _freeze/.
+  # Commit the _freeze/ directory so CI never has to re-execute posts.
+  freeze: auto
+
+website:
+  title: "[Blog title]"
+  description: "[One-sentence description of the blog]"
+  site-url: https://physidev.github.io/group_blog/
+  repo-url: https://github.com/physidev/group_blog
+  open-graph: true
+  search: true
+  navbar:
+    left:
+      - text: Posts
+        href: index.qmd
+      - text: Authors
+        href: authors.qmd
+      - text: About
+        href: about.qmd
+    right:
+      - icon: github
+        href: https://github.com/physidev/group_blog
+      - icon: rss
+        href: index.xml
+
+language:
+  listing-page-filter: "Filter posts"
+
+format:
+  html:
+    theme:
+      light: [cosmo, theme.scss]
+      dark: [darkly, theme.scss]
+    html-math-method: katex
+    # First visit follows the reader's OS light/dark setting.
+    respect-user-color-scheme: true
+    include-after-body: _scripts.html
+    toc: true
+    code-fold: false
+    smooth-scroll: true
+    link-external-newwindow: true

@@ -1,0 +1,196 @@
+/*-- scss:defaults --*/
+@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap");
+// Light (cosmo) and dark (darkly) use different navbar padding, so the page jumped
+// when toggling dark mode. Pin it so both themes share the same metrics.
+$navbar-padding-y: 0.5rem;
+// Same blue navbar and title banner in light and dark mode (Darkly's colors).
+// Quarto derives the banner's background and text from these.
+$navbar-bg: #375a7f;
+$navbar-fg: #fff;
+$navbar-hl: #fff;
+$font-family-sans-serif: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+$font-family-monospace: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+/*-- scss:rules --*/
+// Post text font. KaTeX's math font (Computer Modern) has an x-height/cap-height ratio
+// of 0.631; Inter/system sans fonts are ~0.75, so when lowercase heights matched the math
+// capitals came out ~17% too tall. EB Garamond's ratio is 0.620, so matching x-heights
+// also matches capitals (within 2%). Applied to post prose only; headings, navbar, post
+// list and metadata stay in the sans-serif.
+$prose-font: "EB Garamond", Garamond, "Times New Roman", serif;
+main.content :is(p, li, dd, dt, blockquote, figcaption, td, th):not(#title-block-header *, .quarto-listing *, .listing-actions-group *) {
+  font-family: $prose-font;
+  font-size: 1.25rem; // Garamond's small x-height: 1.25rem gives about the old text's lowercase height
+}
+// Nested list items/paragraphs shouldn't compound the size.
+main.content :is(li, blockquote, td, th) :is(p, li) {
+  font-size: inherit;
+}
+
+// Math size. Next to Garamond, 0.94em makes math lowercase exactly as tall as the
+// text's (measured: Garamond x-height / KaTeX_Main x-height = 0.94). In sans-serif
+// contexts (headings, previews) keep a compromise: 1.21em matches x-heights but makes
+// capitals ~17% too tall there, 1.12em splits the difference.
+body .katex {
+  font-size: 1.12em;
+}
+main.content :is(p, li, dd, dt, blockquote, figcaption, td, th):not(#title-block-header *, .quarto-listing *) .katex {
+  font-size: 0.94em;
+}
+
+// Display spacing. TeX/LaTeX put ~1em of text size above and below a display
+// (\abovedisplayskip = \belowdisplayskip: 10pt at 10pt in LaTeX; 12pt plus 3pt minus 9pt
+// in plain TeX). KaTeX's 1em margin plus the paragraph margin and line spacing gave 1.5em;
+// this negative margin collapses with the surrounding 1em paragraph margins so the visible
+// gap (text to formula) is 1em.
+body .katex-display {
+  position: relative; // contain KaTeX's visually-hidden MathML so it can't widen the page
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.4em 0;   // room for tall radicals/fractions (overflow-y is clipped)
+  // Collapses with the paragraph's 1rem bottom margin: visible gap =
+  // 1rem - (1rem - 0.35em) + 0.4em padding + 0.25em half-leading = 1em of text size.
+  margin: calc(0.35em - 1rem) 0;
+}
+
+
+// Observable Inputs buttons inherit a dark-on-dark color from the theme; fix contrast.
+form[class^="oi-"] button {
+  color: $body-bg;
+  background-color: $body-color;
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+}
+
+// Shinylive's code editor has an off-screen measuring element that widens the page
+// horizontally on narrow screens; clip it to the wrapper.
+.shinylive-wrapper {
+  overflow-x: clip;
+}
+
+// Dark-mode control: a moon in light mode, a sun in dark mode (replaces Quarto's
+// toggle-switch icon). Drawn as a mask so it takes the navbar's text color.
+.quarto-color-scheme-toggle.quarto-color-scheme-toggle .bi::before {
+  width: 1.1rem;
+  height: 1.1rem;
+  vertical-align: -0.15em;
+  background-image: none !important;
+  background-color: currentColor;
+  -webkit-mask: var(--scheme-icon) center / contain no-repeat;
+  mask: var(--scheme-icon) center / contain no-repeat;
+}
+.quarto-color-scheme-toggle.quarto-color-scheme-toggle:not(.alternate) {
+  --scheme-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278'/></svg>");
+}
+.quarto-color-scheme-toggle.quarto-color-scheme-toggle.alternate {
+  --scheme-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708'/></svg>");
+}
+
+// When the navbar collapses (below lg), Quarto puts the dark-mode button right after
+// the title. Push it to the right so it sits next to search, as on wide screens.
+@include media-breakpoint-down(lg) {
+  .navbar .quarto-navbar-tools {
+    margin-left: auto;
+  }
+  .navbar .quarto-navbar-tools ~ #quarto-search {
+    margin-left: 0 !important;
+  }
+}
+
+// Post-list filter when moved into the right margin (see _scripts.html).
+.quarto-listing-filter.in-margin {
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
+// Post list on narrow screens (where Quarto stacks each post): title, then
+// "author · date" on one line, then the summary, with the tags at the bottom.
+@include media-breakpoint-down(md) {
+  .quarto-listing-default .quarto-post {
+    > .body {
+      display: contents; // let title/summary/tags be ordered alongside .metadata
+    }
+    .listing-title { order: 1; margin-bottom: 0.25rem; }
+    > .metadata { order: 2; margin: 0 0 0.6rem; }
+    .listing-description { order: 3; }
+    .listing-categories { order: 4; margin-top: 0.5rem; }
+    > .thumbnail { order: 5; }
+
+    > .metadata > a {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+    .listing-author { order: 1; }
+    .listing-date { order: 2; }
+    .listing-author + .listing-date::before,
+    .listing-date:has(+ .listing-author)::before {
+      content: "·";
+      margin: 0 0.4em;
+    }
+  }
+}
+
+// The moved filter (in the right margin) loses Quarto's `.listing-actions-group`
+// input colors and falls back to a white Bootstrap input; match the page instead.
+.quarto-listing-filter.in-margin .form-control {
+  background-color: $body-bg;
+  color: $body-color;
+}
+
+// Wide post list: center the tags between the title and the summary
+// (measured on the text itself, not the line boxes).
+@include media-breakpoint-up(md) {
+  .quarto-listing-default .quarto-post {
+    .listing-title { margin-bottom: 0; }
+    // ~10px of visible space on each side of the tags.
+    .listing-categories { margin-top: 0.28rem; padding-bottom: 0.19rem; row-gap: 4px; }
+    .listing-categories .listing-category { margin-bottom: 0; }
+  }
+}
+
+// Wide post list: a fixed, name-sized date/author column instead of Quarto's 20%,
+// which left a large empty gap before the title on wide screens.
+@include media-breakpoint-up(md) {
+  .quarto-listing-default div.quarto-post .metadata {
+    flex: 0 0 9.5rem;
+  }
+}
+
+// Inline math baseline: KaTeX wraps each piece of a formula in an inline-block, which
+// the browser snaps to whole pixels separately from the surrounding line. When a line's
+// baseline falls on a fractional pixel, glyphs like a bold X then render 1px (2 device
+// px on Retina) above the text next to them. As plain inline boxes they share the line's
+// rounding. Layout is unchanged (verified: identical glyph positions and line wrapping).
+body .katex .base,
+body .katex .katex-base {  // `body` so it outranks KaTeX's stylesheet, which loads later
+  display: inline;
+}
+
+// Prose line breaking: text-wrap: pretty lets the browser plan breaks across the whole
+// paragraph (fewer one-word last lines, evener rag) where supported. No hyphenation.
+main.content :is(p, li, dd, blockquote, figcaption):not(#title-block-header *, .quarto-listing *, .listing-actions-group *) {
+  text-wrap: pretty;
+}
+// Headings: even out multi-line headings instead of leaving one word on the last line.
+main.content :is(h1, h2, h3, h4),
+.quarto-title :is(h1.title, .subtitle),
+.listing-title {
+  text-wrap: balance;
+}
+
+// Post pages: Quarto's gutter between the text and the "On this page" column is a fixed
+// 1.5em of the 17px root (~26px), which is tight next to 21px Garamond text. Add 1.5rem
+// so the gap is ~51px (about 2.4em of body text).
+#quarto-margin-sidebar nav#TOC {
+  margin-left: 1.5rem;
+}
+
+// Navbar text is now pure white, so the current page can't be marked by a brighter
+// color any more; underline its link instead.
+.navbar .nav-link.active .menu-text {
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.35em;
+}
