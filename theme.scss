@@ -48,9 +48,11 @@ body .katex-display {
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0.4em 0;   // room for tall radicals/fractions (overflow-y is clipped)
-  // Collapses with the paragraph's 1rem bottom margin: visible gap =
-  // 1rem - (1rem - 0.35em) + 0.4em padding + 0.25em half-leading = 1em of text size.
-  margin: calc(0.35em - 1rem) 0;
+  // Visible gap 0.8em: between the gap between lines (~0.5em) and between paragraphs
+  // (~1.3em), so a display reads as part of its paragraph. It collapses with the
+  // paragraph's 1rem margin: 1rem + (0.15em - 1rem) + 0.4em padding + 0.25em
+  // half-leading = 0.8em of text size.
+  margin: calc(0.15em - 1rem) 0;
 }
 
 
