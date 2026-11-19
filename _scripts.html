@@ -14,7 +14,8 @@
 </script>
 <script>
 // Post-list filter: show it in the right margin above "Categories" when that margin
-// is visible (wide screens); otherwise keep it above the post list.
+// is visible (wide screens). On narrow screens it stays in its original spot above
+// the post list, which theme.scss hides.
 (() => {
   const filter = document.querySelector(".quarto-listing-filter");
   const margin = document.getElementById("quarto-margin-sidebar");
@@ -22,21 +23,25 @@
   if (!filter || !categories) return;
   const home = filter.parentElement;
 
-  // Distance from the top of an element's line box to the top of its capital letters.
-  const capTopOffset = (el) => {
+  // Page y of the top of the capital letters on an element's first line: find the
+  // baseline with a zero-size marker, then subtract the font's cap height. Works whether
+  // or not the line box is trimmed (text-box) or has extra leading.
+  const capTop = (el) => {
+    const marker = document.createElement("span");
+    marker.style.cssText = "display:inline-block;width:0;height:0;vertical-align:baseline";
+    el.prepend(marker);
+    const baseline = marker.getBoundingClientRect().top;
+    marker.remove();
     const cs = getComputedStyle(el);
     const ctx = document.createElement("canvas").getContext("2d");
     ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-    const m = ctx.measureText("H");
-    const halfLeading = (parseFloat(cs.lineHeight) - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2;
-    return halfLeading + m.fontBoundingBoxAscent - m.actualBoundingBoxAscent;
+    return baseline - ctx.measureText("H").actualBoundingBoxAscent;
   };
   const alignWithFirstTitle = () => {
     const title = document.querySelector(".quarto-post .listing-title a");
     filter.style.marginTop = "";
     if (!title || !filter.classList.contains("in-margin")) return;
-    const capTop = title.getBoundingClientRect().top + capTopOffset(title);
-    const gap = capTop - filter.getBoundingClientRect().top;
+    const gap = capTop(title) - filter.getBoundingClientRect().top;
     filter.style.marginTop = `${Math.max(0, gap)}px`;
   };
 
@@ -49,7 +54,6 @@
       home.appendChild(filter);
       filter.classList.remove("in-margin");
     }
-    home.closest(".quarto-listing-header, .listing-actions-group").style.display = wide ? "none" : "";
     alignWithFirstTitle();
   };
   // Wait until Quarto has wired the filter to the list (on DOMContentLoaded): it only

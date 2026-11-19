@@ -104,6 +104,28 @@ form[class^="oi-"] button {
   width: 100%;
 }
 
+// Post list spacing: one gap between every item in a post's stack (title, author/date,
+// preview, tags), the same on every screen width. Text is trimmed to its visible edges
+// (top of capitals to baseline) with text-box, so the gap is measured between what you
+// see rather than between line boxes with different fonts and line heights.
+// 1.25rem (21px): clearly more than the 13.5px between lines of the preview paragraph
+// (so separate items read as separate), and about half the ~42px between posts
+// (so a post still reads as one group). Gestalt proximity.
+$post-stack-gap: 1.25rem;
+.quarto-listing-default div.quarto-post {
+  :is(.listing-title, .listing-description, .listing-author, .listing-date) {
+    text-box: trim-both cap alphabetic;
+  }
+  .body :is(h3.listing-title, .listing-description, .listing-categories) {
+    margin: 0;
+    padding: 0;
+  }
+  .listing-categories {
+    row-gap: 4px;
+    .listing-category { margin-bottom: 0; }
+  }
+}
+
 // Post list on narrow screens (where Quarto stacks each post): title, then
 // "author · date" on one line, then the summary, with the tags at the bottom.
 @include media-breakpoint-down(md) {
@@ -111,10 +133,11 @@ form[class^="oi-"] button {
     > .body {
       display: contents; // let title/summary/tags be ordered alongside .metadata
     }
-    .listing-title { order: 1; margin-bottom: 0.25rem; }
-    > .metadata { order: 2; margin: 0 0 0.6rem; }
+    row-gap: $post-stack-gap;
+    .listing-title { order: 1; }
+    > .metadata { order: 2; margin: 0; padding: 0; } // drop Quarto's 1em bottom padding
     .listing-description { order: 3; }
-    .listing-categories { order: 4; margin-top: 0.5rem; }
+    .listing-categories { order: 4; }
     > .thumbnail { order: 5; }
 
     > .metadata > a {
@@ -139,14 +162,26 @@ form[class^="oi-"] button {
   color: $body-color;
 }
 
-// Wide post list: center the tags between the title and the summary
-// (measured on the text itself, not the line boxes).
+// Wide post list: title, then the preview, with the tags underneath (same order as
+// on narrow screens).
 @include media-breakpoint-up(md) {
   .quarto-listing-default .quarto-post {
-    .listing-title { margin-bottom: 0; }
-    // ~10px of visible space on each side of the tags.
-    .listing-categories { margin-top: 0.28rem; padding-bottom: 0.19rem; row-gap: 4px; }
-    .listing-categories .listing-category { margin-bottom: 0; }
+    > .body {
+      display: flex;
+      flex-direction: column;
+      row-gap: $post-stack-gap;
+    }
+    .listing-title { order: 1; }
+    .listing-description { order: 2; }
+    .listing-categories { order: 3; }
+    // Left column: date over author, same gap; no top margin, so the date's capitals
+    // line up with the title's.
+    > .metadata { margin-top: 0; }
+    > .metadata > a {
+      display: flex;
+      flex-direction: column;
+      row-gap: $post-stack-gap;
+    }
   }
 }
 
@@ -193,4 +228,12 @@ main.content :is(h1, h2, h3, h4),
   text-decoration: underline;
   text-decoration-thickness: 1.5px;
   text-underline-offset: 0.35em;
+}
+
+// The post-list filter's original spot above the list. The filter only shows when the
+// script moves it into the right margin above "Categories" (wide screens); on narrow
+// screens, where that margin is hidden, it stays here, hidden. Hiding it in CSS also
+// avoids a flash before the script runs.
+.quarto-listing .listing-actions-group {
+  display: none;
 }
